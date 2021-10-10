@@ -1,0 +1,14 @@
+[Unit]
+Description=UPSite Service
+After=network.target
+
+[Service]
+Type=simple
+
+ExecStart=/usr/bin/env python /usr/local/bin/UPSLite.py
+WorkingDirectory=/root/
+SyslogIdentifier=upslite
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
