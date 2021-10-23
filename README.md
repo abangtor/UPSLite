@@ -1,18 +1,40 @@
 # UPSLite
 
-Python script for Raspberry Zero UPS-Lite.
+## Start on external power
 
-This script will shutdown the device when the battery capacity drops below 30%.
+To start up the Raspberry Pi when the external power supply is connected,  
+a small circuit is necessary, which is pulling down pin 3.  
+A signal change of pin 3 initiates a wake up of the Pi if is halted.  
+Additionally the two pads on the back of the UPS must be shorted.
 
-## Installation
+Pin 3 is the I2C clock line.  
+This means that if the external power is connected,  
+there is no communication on the I2C interface possible.  
+Due to that, the capacity of the battery can not be read during charging.
+
+A possible solution for this flaw could be a circuit  
+which is just shortly pulling down the line  
+if the external power supply is connected.  
+In my case, I can live with the draw back of the current solution.
+
+### Circuit schematic
+![StartupTriggerSchematic](img/StartupTriggerSchematic.drawio.svg)
+
+### Sample implementation
+![](img/StartupTrigger001.jpg)![](img/StartupTrigger002.jpg)
+
+### BOM
+| Ref | Qty | Part |
+|:---:|:---:|:---- |
+| R2  |  1  | Resistor 1.8 kΩ |
+| T1  |  1  | NPN Transistor S9018 |
+|  -  |  2  | Female Header 2 Pins |
+
+## UPS Service Installation
 
 * Move `UPSLite.py` to `/usr/local/bin/`
-
 * Move `UPSLite.service` to `/etc/systemd/system/`
-
-* To run on system start, execute
-
-  `sudo systemctl start UPSLite.service`
-
+* To run, execute  
+  `sudo systemctl start UPSLite.service`  
   `sudo systemctl enable UPSLite.service`
 
