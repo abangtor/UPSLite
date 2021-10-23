@@ -68,19 +68,45 @@ class UPSLite:
 
 print "<6>Initialize UPSLite..."
 objUpsLite = UPSLite(1, 0x36, 4)
+boTriggerShutdown = False
+uiOnBatteryTime = 0
+boResetTimer = True
 
+### MainLoop
 while True:
   objUpsLite.Update();
   
+### Log UPS status
   if( objUpsLite.IsOnPower() ):
     print "<7> On external Powersupply..."
   else:
     print "<7> On Battery: %5.2fV" % objUpsLite.GetVoltage() \
         + " %5i%%" % objUpsLite.GetCapacity()
-  
+
+### Shutdown on low power
   if( not objUpsLite.IsOnPower() and \
       objUpsLite.GetCapacity() <= 30 ):
     print "<4> low power, initiating system shutdown..."
-    os.system('shutdown now -H')
+    boTriggerShutdown = True
+
+### Shutdown if after 10 min on battery
+  if( objUpsLite.IsOnPower() ):
+    if( not boResetTimer ):
+      boResetTimer = True
+  else:
+    if( boResetTimer ):
+      boResetTimer = False
+      uiOnBatteryTime = time.time()
+    uiElapsedTime = time.time() - uiOnBatteryTime
+    if( uiElapsedTime >= (60*10) ):
+      print "<7> On Battery since %5is, initiating system shutdown..." % uiElapsedTime
+      boTriggerShutdown = True
   
+### Send shutdown signal to system
+  if( boTriggerShutdown ):
+    boTriggerShutdown = False
+    print "<4> Send Shutdown Signal..."
+    os.system('shutdown now -H')
+
+### Sleep
   time.sleep(5)

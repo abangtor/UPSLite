@@ -30,7 +30,17 @@ In my case, I can live with the draw back of the current solution.
 | T1  |  1  | NPN Transistor S9018 |
 |  -  |  2  | Female Header 2 Pins |
 
-## UPS Service Installation
+## UPSLite Service
+
+The UPSLite service is a small python script,  
+which is regularly checking the power supply status,  
+as also the battery level.
+
+It will initiate a system shutdown if
+- the battery capacity drops below 30%
+- or the device is running more than 10 min on battery.
+
+### Installation
 
 * Move `UPSLite.py` to `/usr/local/bin/`
 * Move `UPSLite.service` to `/etc/systemd/system/`
