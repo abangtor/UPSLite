@@ -10,12 +10,8 @@ Additionally the two pads on the back of the UPS must be shorted.
 Pin 3 is the I2C clock line.  
 This means that if the external power is connected,  
 there is no communication on the I2C interface possible.  
-Due to that, the capacity of the battery can not be read during charging.
-
-A possible solution for this flaw could be a circuit  
-which is just shortly pulling down the line  
-if the external power supply is connected.  
-In my case, I can live with the draw back of the current solution.
+Therefor another pin can be used to temporary enable the I2C interface.  
+This enables the I2C interface temporary for communication.
 
 ### Circuit schematic
 ![StartupTriggerSchematic](img/StartupTriggerSchematic.drawio.svg)
@@ -29,6 +25,7 @@ In my case, I can live with the draw back of the current solution.
 | R2  |  1  | Resistor 1.8 kΩ |
 | T1  |  1  | NPN Transistor S9018 |
 |  -  |  2  | Female Header 2 Pins |
+|  -  |  -  | Silver Wire |
 
 ## UPSLite Service
 
@@ -38,7 +35,13 @@ as also the battery level.
 
 It will initiate a system shutdown if
 - the battery capacity drops below 30%
+- the voltage drops below 4.8V
 - or the device is running more than 10 min on battery.
+
+Additionally the current readings are written into:  
+`/tmp/UPSLiteStatus.txt`  
+in the format:  
+`<Status (0=Battery, 1=Power supply)>\n<Voltage>\n<Capacity>`
 
 ### Installation
 

@@ -8,42 +8,47 @@ import RPi.GPIO as GPIO
 #########
 # CLASS #
 class UPSLite:
-  def __init__(self, f_uiBusID, f_uiAddress, f_uiGpioId):
-    self.objBus      = smbus.SMBus(f_uiBusID)
-    self.uiAddress   = f_uiAddress
-    self.uiGpioId    = f_uiGpioId
-    self.flVoltage   = 0
-    self.flCapacity  = 0
-    self.boIsOnPower = False
-    self.boInitBus   = True
+  def __init__(self, f_uiBusID, f_uiAddress, f_uiExPwrGpio, f_uiSelectGpio):
+    self.objBus       = smbus.SMBus(f_uiBusID)
+    self.uiAddress    = f_uiAddress
+    self.uiExPwrGpio  = f_uiExPwrGpio
+    self.uiSelectGpio = f_uiSelectGpio
+    self.flVoltage    = 0
+    self.flCapacity   = 0
+    self.boIsOnPower  = False
+    self.boInitBus    = True
     
     # Init GPIO
     GPIO.setmode(GPIO.BCM)
     GPIO.setwarnings(False)
-    GPIO.setup(self.uiGpioId, GPIO.IN)
+    GPIO.setup(self.uiSelectGpio, GPIO.IN)
+    GPIO.setup(self.uiExPwrGpio, GPIO.IN)
     
   def Update(self):
     # Read power suppy state
-    self.boIsOnPower = (GPIO.input(self.uiGpioId) == GPIO.HIGH)
+    self.boIsOnPower = (GPIO.input(self.uiExPwrGpio) == GPIO.HIGH)
     
+    # Enable I2C line
     if( self.boIsOnPower ):
-      # Enforce initialisation of bus un next run
-      if( not self.boInitBus ):
-        self.boInitBus = True
-    else:
-      # Init bus if necesarry
-      if( self.boInitBus ):
-        self.InitBus()
+      GPIO.setup(self.uiSelectGpio, GPIO.OUT)
+      GPIO.output(self.uiSelectGpio, GPIO.LOW)
+
+    if( self.boInitBus ):
+      self.InitBus()
+  
+    # Read voltage from i2c
+    ui16BusReading   = self.objBus.read_word_data(self.uiAddress, 0X02)
+    flVoltageRaw     = struct.unpack("<H", struct.pack(">H", ui16BusReading))[0]
+    self.flVoltage   = flVoltageRaw * 1.25 /1000/16
     
-      # Read voltage from i2c
-      ui16BusReading   = self.objBus.read_word_data(self.uiAddress, 0X02)
-      flVoltageRaw     = struct.unpack("<H", struct.pack(">H", ui16BusReading))[0]
-      self.flVoltage   = flVoltageRaw * 1.25 /1000/16
-      
-      # Read capacity from i2c
-      ui16BusReading   = self.objBus.read_word_data(self.uiAddress, 0X04)
-      flCapacityRaw    = struct.unpack("<H", struct.pack(">H", ui16BusReading))[0]
-      self.flCapacity  = flCapacityRaw/256
+    # Read capacity from i2c
+    ui16BusReading   = self.objBus.read_word_data(self.uiAddress, 0X04)
+    flCapacityRaw    = struct.unpack("<H", struct.pack(">H", ui16BusReading))[0]
+    self.flCapacity  = flCapacityRaw/256
+    
+    # Disable I2C Line
+    if( self.boIsOnPower ):
+      GPIO.setup(self.uiSelectGpio, GPIO.IN)
     
   def InitBus(self):
     # Init i2c Bus
@@ -67,7 +72,7 @@ class UPSLite:
 # MAIN #
 
 print "<6>Initialize UPSLite..."
-objUpsLite = UPSLite(1, 0x36, 4)
+objUpsLite = UPSLite(1, 0x36, 4, 17)
 boTriggerShutdown = False
 uiOnBatteryTime = 0
 boResetTimer = True
@@ -78,14 +83,28 @@ while True:
   
 ### Log UPS status
   if( objUpsLite.IsOnPower() ):
-    print "<7> On external Powersupply..."
+    print "<7> On external Powersupply: %.2fV" % objUpsLite.GetVoltage() \
+        + " %i%%" % objUpsLite.GetCapacity()
   else:
-    print "<7> On Battery: %5.2fV" % objUpsLite.GetVoltage() \
-        + " %5i%%" % objUpsLite.GetCapacity()
+    print "<7> On Battery: %.2fV" % objUpsLite.GetVoltage() \
+        + " %i%%" % objUpsLite.GetCapacity()
+        
+### Write in temp file
+  objFile = open('/tmp/UPSLiteStatus.txt', 'wt')
+  objFile.write("%i" % objUpsLite.IsOnPower() + "\n" \
+              + "%.3f" % objUpsLite.GetVoltage() + "\n" \
+              + "%i" % objUpsLite.GetCapacity() +"\n")
+  objFile.close()
 
 ### Shutdown on low power
   if( not objUpsLite.IsOnPower() and \
       objUpsLite.GetCapacity() <= 30 ):
+    print "<4> low battery, initiating system shutdown..."
+    boTriggerShutdown = True
+
+### Shutdown if battery voltage drops below 3.8V
+  if( not objUpsLite.IsOnPower() and \
+      objUpsLite.GetVoltage() <= 3.8 ):
     print "<4> low power, initiating system shutdown..."
     boTriggerShutdown = True
 
@@ -99,7 +118,7 @@ while True:
       uiOnBatteryTime = time.time()
     uiElapsedTime = time.time() - uiOnBatteryTime
     if( uiElapsedTime >= (60*10) ):
-      print "<7> On Battery since %5is, initiating system shutdown..." % uiElapsedTime
+      print "<7> On Battery since %is, initiating system shutdown..." % uiElapsedTime
       boTriggerShutdown = True
   
 ### Send shutdown signal to system
