@@ -91,14 +91,14 @@ while True:
         
 ### Write in temp file
   objFile = open('/tmp/UPSLiteStatus.txt', 'wt')
-  objFile.write("%i" % objUpsLite.IsOnPower() + "\n" \
-              + "%.3f" % objUpsLite.GetVoltage() + "\n" \
-              + "%i" % objUpsLite.GetCapacity() +"\n")
+  objFile.write("%i"   % objUpsLite.IsOnPower()   + "\n" \
+              + "%.4f" % objUpsLite.GetVoltage()  + "\n" \
+              + "%.1f" % objUpsLite.GetCapacity() + "\n")
   objFile.close()
 
 ### Shutdown on low power
   if( not objUpsLite.IsOnPower() and \
-      objUpsLite.GetCapacity() <= 30 ):
+      objUpsLite.GetCapacity() <= 50 ):
     print "<4> low battery, initiating system shutdown..."
     boTriggerShutdown = True
 

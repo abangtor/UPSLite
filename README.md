@@ -34,8 +34,8 @@ which is regularly checking the power supply status,
 as also the battery level.
 
 It will initiate a system shutdown if
-- the battery capacity drops below 30%
-- the voltage drops below 4.8V
+- the battery capacity drops below 50%
+- the voltage drops below 3.8V
 - or the device is running more than 10 min on battery.
 
 Additionally the current readings are written into:  
