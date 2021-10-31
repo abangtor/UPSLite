@@ -5,6 +5,9 @@ After=network.target
 [Service]
 Type=simple
 
+LimitNICE=-5
+Nice=-5
+
 ExecStart=/usr/bin/env python /usr/local/bin/UPSLite.py
 WorkingDirectory=/root/
 SyslogIdentifier=upslite
