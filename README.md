@@ -24,7 +24,7 @@ This enables temporary communication on the I²C interface.
 |:---:|:---:|:---- |
 | R2  |  1  | Resistor 1.8 kΩ |
 | T1  |  1  | NPN Transistor S9018 |
-|  -  |  2  | Female Header 2 Pins |
+|  -  |  1  | Female Header 4 Pins |
 |  -  |  -  | Silver Wire |
 
 ## UPSLite Service
