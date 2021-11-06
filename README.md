@@ -7,11 +7,11 @@ a small circuit is necessary, which is pulling down pin 3.
 A signal change of pin 3 initiates a wake up of the Pi if is halted.  
 Additionally the two pads on the back of the UPS must be shorted.
 
-Pin 3 is the I2C clock line.  
+Pin 3 is the I²C clock line.  
 This means that if the external power is connected,  
-there is no communication on the I2C interface possible.  
-Therefor another pin can be used to temporary enable the I2C interface.  
-This enables the I2C interface temporary for communication.
+there is no communication on the I²C interface possible.  
+Therefor another pin can be used to temporary enable the I²C interface.  
+This enables temporary communication on the I²C interface.
 
 ### Circuit schematic
 ![StartupTriggerSchematic](img/StartupTriggerSchematic.drawio.svg)
